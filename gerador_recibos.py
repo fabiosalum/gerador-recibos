@@ -143,8 +143,14 @@ def gerar_recibos():
 
         # Agrupar por documento (CPF) apenas no DataFrame filtrado
         for documento, grupo in df_filtrado.groupby(mapeamento['documento']):
-            if grupo.empty:
-                continue  # Não gera recibo para grupos vazios (por segurança extra)
+            if (
+                grupo.empty
+                or not documento
+                or pd.isna(documento)
+                or str(documento).strip() == ""
+                or str(documento).strip().lower() in ["(none)", "none"]
+            ):
+                continue  # Não gera recibo para grupos sem CPF/documento
             nome = grupo[mapeamento['nome']].iloc[0]
             curso = ', '.join(sorted(grupo[mapeamento['produto']].unique()))
             valor_total_num = grupo[mapeamento['valor de compra com impostos']].sum()
