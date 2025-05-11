@@ -7,6 +7,9 @@ from datetime import datetime
 from num2words import num2words
 import os
 import difflib
+import yagmail
+from email_utils import enviar_emails
+from tkinter.simpledialog import askstring
 
 # Variáveis globais para armazenar os caminhos
 arquivo_selecionado = None
@@ -284,6 +287,42 @@ def encontrar_coluna_nome(df):
             return correspondencia[0]
     return None
 
+def disparar_emails():
+    global pasta_destino, arquivo_selecionado
+    if not pasta_destino or not arquivo_selecionado:
+        messagebox.showerror("Erro", "Selecione a planilha e a pasta de destino antes de disparar os e-mails.")
+        return
+    try:
+        usuario = askstring("E-mail remetente", "Digite o e-mail remetente (SMTP):")
+        senha = askstring("Senha de aplicativo", "Digite a senha de aplicativo do e-mail:", show='*')
+        smtp_host = askstring("Servidor SMTP", "Servidor SMTP (ex: smtp.gmail.com) [deixe em branco para automático]:")
+        smtp_porta = askstring("Porta SMTP", "Porta SMTP (ex: 587) [deixe em branco para automático]:")
+        if not usuario or not senha:
+            messagebox.showerror("Erro", "Usuário e senha são obrigatórios.")
+            return
+        ano = ano_combobox.get()
+        enviados, sucessos, erros = enviar_emails(
+            planilha=arquivo_selecionado,
+            pasta_destino=pasta_destino,
+            ano=ano,
+            caminho_template="email_template.html",
+            usuario=usuario,
+            senha=senha,
+            smtp_host=smtp_host,
+            smtp_porta=smtp_porta
+        )
+        resumo = ""
+        if sucessos:
+            resumo += "E-mails enviados com sucesso:\n" + "\n".join(sucessos) + "\n\n"
+        if erros:
+            resumo += "Falhas no envio:\n" + "\n".join(erros)
+        if resumo:
+            messagebox.showinfo("Resumo do envio", resumo)
+        else:
+            messagebox.showinfo("Resumo do envio", "Nenhum e-mail foi enviado.")
+    except Exception as e:
+        messagebox.showerror("Erro", f"Ocorreu um erro ao disparar os e-mails: {e}")
+
 # Interface
 root = tk.Tk()
 root.title("Gerador de Recibos")
@@ -366,6 +405,10 @@ label_pasta.pack(side=tk.LEFT, padx=5)
 # Botão para gerar recibos (inicialmente desabilitado)
 botao_gerar = tk.Button(main_frame, text="Gerar Recibos", command=gerar_recibos, state='disabled')
 botao_gerar.pack(pady=20)
+
+# Adicionar botão para disparar e-mails
+botao_email = tk.Button(main_frame, text="Disparar E-mails", command=disparar_emails)
+botao_email.pack(pady=10)
 
 # Função para converter nome do mês para número
 def mes_para_numero(nome_mes):
