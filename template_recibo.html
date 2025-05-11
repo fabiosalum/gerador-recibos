@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+        html, body {
+            min-height: 297mm;
+        }
+        body {
+            font-family: 'Sora', Arial, sans-serif;
+            margin: 0 auto;
+            padding: 0;
+            box-sizing: border-box;
+            max-width: 190mm;
+        }
+        .faixa-topo, .faixa-rodape {
+            width: 100%;
+            height: 10px;
+            background: #d36e28;
+            position: absolute;
+            left: 0;
+        }
+        .faixa-topo {
+            top: 0;
+        }
+        .faixa-rodape {
+            bottom: 0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            margin-top: 20px;
+        }
+        .header img {
+            height: 60px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 8px; text-align: left; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .assinatura-area {
+            margin-top: 40px;
+            text-align: center;
+        }
+        .assinatura-img {
+            height: 60px;
+            margin-bottom: 0px;
+        }
+        .linha-assinatura {
+            border: none;
+            border-top: 1.5px solid #333;
+            width: 220px;
+            margin: 8px auto 2px auto;
+        }
+        .nome-assinatura {
+            font-weight: 600;
+            margin-bottom: 0px;
+        }
+        .cargo-assinatura {
+            font-size: 0.95em;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ logo_esperancar_path }}" alt="Logo Esperançar">
+        <img src="{{ logo_unita_path }}" alt="Logo Unita">
+    </div>
+    <h2 class="center">Recibo de pagamento anual</h2>
+    <p>
+        Declaramos para os devidos fins que recebemos do(a) Aluno(a)
+        <span class="bold">{{ nome }} ({{ cpf }})</span>,
+        a quantia total de <span class="bold">R$ {{ valor_total }} ({{ valor_extenso }})</span>,
+        conforme discriminado a seguir:
+    </p>
+
+    <p>
+        <span class="bold">Curso:</span> "{{ curso }}", período de {{ periodo }}.
+        <br>
+        <span class="bold">Razão social:</span> ESPERANÇAR INSTITUTO EDUCACIONAL LTDA <br>
+        <span class="bold">CNPJ:</span> 32.163.997/0001-97<br>
+        <span class="bold">Valor pago:</span> R$ {{ valor_total }}
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nº</th>
+                <th>Data do pagamento</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for parcela in parcelas %}
+            <tr>
+                <td>{{ parcela.numero }}</td>
+                <td>{{ parcela.data }}</td>
+                <td>R$ {{ parcela.valor }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p>O valor refere-se à R$ {{ valor_total }} ({{ percentual_pago }}%) de serviço de ensino.</p>
+
+    <div class="assinatura-area">
+        <img src="{{ assinatura_path }}" alt="Assinatura" class="assinatura-img"><br>
+        <hr class="linha-assinatura">
+        <div class="nome-assinatura">Pâmela</div>
+        <div class="cargo-assinatura">coordenadora acadêmica</div>
+    </div>
+
+    <p class="center" style="margin-top: 40px;">Uberaba, {{ data_recibo }}.</p>
+</body>
+</html>
