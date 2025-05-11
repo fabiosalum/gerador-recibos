@@ -5,68 +5,90 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&display=swap" rel="stylesheet">
     <style>
         @page {
-            size: A4 portrait;
+            
             margin: 0;
         }
         html, body {
-            min-height: 297mm;
+            
+            margin: 0;
+            padding: 0;
         }
         body {
             font-family: 'Sora', Arial, sans-serif;
             margin: 0 auto;
-            padding: 0;
+            padding: 15mm 12mm;
             box-sizing: border-box;
-            max-width: 190mm;
+            width: 210mm;
+            display: flex;
+            flex-direction: column;
         }
-        .faixa-topo, .faixa-rodape {
-            width: 100%;
-            height: 10px;
-            background: #d36e28;
-            position: absolute;
-            left: 0;
-        }
-        .faixa-topo {
-            top: 0;
-        }
-        .faixa-rodape {
-            bottom: 0;
-        }
+
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            margin-top: 20px;
+            margin-bottom: 15px;
         }
         .header img {
-            height: 60px;
+            height: 80px;
         }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        table, th, td { border: 1px solid #ddd; }
-        th, td { padding: 8px; text-align: left; }
-        .center { text-align: center; }
-        .bold { font-weight: bold; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 10px 0;
+            font-size: 9pt;
+        }
+        table, th, td { 
+            border: 1px solid #ddd; 
+        }
+        th, td { 
+            padding: 6px; 
+            text-align: left; 
+        }
+        .center { 
+            text-align: center; 
+        }
+        .bold { 
+            font-weight: bold; 
+        }
         .assinatura-area {
-            margin-top: 40px;
+            margin-top: auto;
             text-align: center;
+            padding-top: 20px;
         }
         .assinatura-img {
-            height: 60px;
-            margin-bottom: 0px;
+            height: 45px;
+            margin-bottom: 5px;
         }
         .linha-assinatura {
             border: none;
             border-top: 1.5px solid #333;
-            width: 220px;
-            margin: 8px auto 2px auto;
+            width: 200px;
+            margin: 5px auto 2px auto;
         }
         .nome-assinatura {
             font-weight: 600;
-            margin-bottom: 0px;
+            margin-bottom: 2px;
+            font-size: 9pt;
         }
         .cargo-assinatura {
-            font-size: 0.95em;
+            font-size: 8pt;
             color: #444;
+        }
+        p {
+            margin: 8px 0;
+            line-height: 1.3;
+            font-size: 10pt;
+        }
+        h2 {
+            margin: 10px 0;
+            font-size: 12pt;
+        }
+        .data-local {
+            text-align: center;
+            font-size: 9pt;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -84,7 +106,7 @@
     </p>
 
     <p>
-        <span class="bold">Curso:</span> "{{ curso }}", período de {{ periodo }}.
+        <span class="bold">Curso:</span> "{{ curso }}", {{ periodo }}.
         <br>
         <span class="bold">Razão social:</span> ESPERANÇAR INSTITUTO EDUCACIONAL LTDA <br>
         <span class="bold">CNPJ:</span> 32.163.997/0001-97<br>
@@ -112,13 +134,13 @@
 
     <p>O valor refere-se à R$ {{ valor_total }} ({{ percentual_pago }}%) de serviço de ensino.</p>
 
+    <div class="data-local">Uberaba, {{ data_recibo }}.</div>
+
     <div class="assinatura-area">
         <img src="{{ assinatura_path }}" alt="Assinatura" class="assinatura-img"><br>
         <hr class="linha-assinatura">
-        <div class="nome-assinatura">Pâmela</div>
-        <div class="cargo-assinatura">coordenadora acadêmica</div>
+        <div class="nome-assinatura">Pâmela de Sousa Malta</div>
+        <div class="cargo-assinatura">Coordenadora Acadêmica</div>
     </div>
-
-    <p class="center" style="margin-top: 40px;">Uberaba, {{ data_recibo }}.</p>
 </body>
 </html>

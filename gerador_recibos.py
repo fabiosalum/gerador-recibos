@@ -8,62 +8,57 @@ from num2words import num2words
 import os
 import difflib
 
+# Variáveis globais para armazenar os caminhos
+arquivo_selecionado = None
+pasta_destino = None
+
 def selecionar_arquivo():
-    ano_selecionado = ano_combobox.get()
-    if not ano_selecionado:
-        messagebox.showerror("Erro", "Por favor, selecione um ano.")
-        return
+    global arquivo_selecionado
     arquivo = filedialog.askopenfilename(
         title="Selecione a planilha",
         filetypes=[("Planilhas Excel", "*.xlsx *.xls")]
     )
     if arquivo:
-        pasta_destino = filedialog.askdirectory(title="Selecione a pasta para salvar os recibos")
-        if not pasta_destino:
-            messagebox.showwarning("Aviso", "Seleção de pasta cancelada. O processo foi interrompido.")
-            return
-        gerar_recibos(arquivo, ano_selecionado, pasta_destino)
+        arquivo_selecionado = arquivo
+        label_arquivo.config(text=f"Arquivo selecionado: {os.path.basename(arquivo)}")
+        botao_gerar.config(state='normal')
 
-def formatar_valor(valor):
-    return f"{valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+def selecionar_pasta():
+    global pasta_destino
+    pasta = filedialog.askdirectory(title="Selecione a pasta para salvar os recibos")
+    if pasta:
+        pasta_destino = pasta
+        label_pasta.config(text=f"Pasta selecionada: {os.path.basename(pasta)}")
 
-def encontrar_coluna(df, nome_procurado, cutoff=0.7):
-    colunas = list(df.columns)
-    # Tenta correspondência exata primeiro
-    for col in colunas:
-        if col == nome_procurado:
-            return col
-    # Se não encontrar, faz fuzzy matching
-    correspondencia = difflib.get_close_matches(nome_procurado, colunas, n=1, cutoff=cutoff)
-    if correspondencia:
-        return correspondencia[0]
-    return None
+def gerar_recibos():
+    global arquivo_selecionado, pasta_destino
+    
+    ano_selecionado = ano_combobox.get()
+    mes_inicial = mes_para_numero(mes_inicial_combobox.get())
+    mes_final = mes_para_numero(mes_final_combobox.get())
+    
+    if not ano_selecionado:
+        messagebox.showerror("Erro", "Por favor, selecione um ano.")
+        return
+        
+    if not mes_inicial or not mes_final:
+        messagebox.showerror("Erro", "Por favor, selecione o período inicial e final.")
+        return
+        
+    if int(mes_inicial) > int(mes_final):
+        messagebox.showerror("Erro", "O mês inicial não pode ser maior que o mês final.")
+        return
+        
+    if not arquivo_selecionado:
+        messagebox.showerror("Erro", "Por favor, selecione um arquivo.")
+        return
+        
+    if not pasta_destino:
+        messagebox.showerror("Erro", "Por favor, selecione uma pasta de destino.")
+        return
 
-# Lista de possíveis nomes para o campo nome
-possiveis_nomes = [
-    'nome',
-    'nome do(a) comprador(a)',
-    'nome do comprador',
-    'comprador(a)'
-]
-
-def encontrar_coluna_nome(df):
-    colunas = list(df.columns)
-    # Tenta correspondência exata
-    for nome in possiveis_nomes:
-        for col in colunas:
-            if col == nome:
-                return col
-    # Fuzzy matching se não encontrar exato
-    for nome in possiveis_nomes:
-        correspondencia = difflib.get_close_matches(nome, colunas, n=1, cutoff=0.7)
-        if correspondencia:
-            return correspondencia[0]
-    return None
-
-def gerar_recibos(caminho_arquivo, ano, pasta_destino):
     try:
-        df = pd.read_excel(caminho_arquivo)
+        df = pd.read_excel(arquivo_selecionado)
 
         # Exibe os nomes das colunas lidos para o usuário
         colunas_lidas = list(df.columns)
@@ -108,16 +103,35 @@ def gerar_recibos(caminho_arquivo, ano, pasta_destino):
             errors='coerce'
         )
 
-        # Filtrar apenas os pagamentos do ano selecionado
-        ano_int = int(ano)
-        df_filtrado = df[df[mapeamento['data da transação']].dt.year == ano_int]
+        # Filtrar por ano e período
+        ano_int = int(ano_selecionado)
+        mes_inicial_int = int(mes_inicial)
+        mes_final_int = int(mes_final)
+        
+        # Criar data inicial e final do período
+        data_inicial = pd.Timestamp(year=ano_int, month=mes_inicial_int, day=1)
+        if mes_final_int == 12:
+            data_final = pd.Timestamp(year=ano_int, month=mes_final_int, day=31)
+        else:
+            data_final = pd.Timestamp(year=ano_int, month=mes_final_int + 1, day=1) - pd.Timedelta(days=1)
+        
+        # Aplicar filtro
+        df_filtrado = df[
+            (df[mapeamento['data da transação']].dt.year == ano_int) &
+            (df[mapeamento['data da transação']].dt.month >= mes_inicial_int) &
+            (df[mapeamento['data da transação']].dt.month <= mes_final_int)
+        ]
+        
         if df_filtrado.empty:
-            messagebox.showwarning("Aviso", f"Nenhum pagamento encontrado para o ano {ano}.")
+            messagebox.showwarning(
+                "Aviso", 
+                f"Nenhum pagamento encontrado para o período de {mes_inicial}/{ano_selecionado} a {mes_final}/{ano_selecionado}."
+            )
             return
 
         print("Todas as datas lidas:")
         print(df[mapeamento['data da transação']])
-        print("Datas após o filtro do ano:")
+        print("Datas após o filtro do período:")
         print(df_filtrado[mapeamento['data da transação']])
 
         # Carrega o template
@@ -218,13 +232,51 @@ def gerar_recibos(caminho_arquivo, ano, pasta_destino):
                 nome_str = str(documento)
 
             # Salva PDF
-            nome_arquivo = os.path.join(pasta_destino, f"{nome_str}_{ano}.pdf")
+            nome_arquivo = os.path.join(pasta_destino, f"{nome_str}_{ano_selecionado}.pdf")
             HTML(string=html_out).write_pdf(nome_arquivo)
 
         messagebox.showinfo("Sucesso", f"Recibos gerados na pasta selecionada: {pasta_destino}")
 
     except Exception as e:
         messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
+
+def formatar_valor(valor):
+    return f"{valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+def encontrar_coluna(df, nome_procurado, cutoff=0.7):
+    import difflib
+    colunas = list(df.columns)
+    # Tenta correspondência exata primeiro
+    for col in colunas:
+        if col == nome_procurado:
+            return col
+    # Se não encontrar, faz fuzzy matching
+    correspondencia = difflib.get_close_matches(nome_procurado, colunas, n=1, cutoff=cutoff)
+    if correspondencia:
+        return correspondencia[0]
+    return None
+
+possiveis_nomes = [
+    'nome',
+    'nome do(a) comprador(a)',
+    'nome do comprador',
+    'comprador(a)'
+]
+
+def encontrar_coluna_nome(df):
+    import difflib
+    colunas = list(df.columns)
+    # Tenta correspondência exata
+    for nome in possiveis_nomes:
+        for col in colunas:
+            if col == nome:
+                return col
+    # Fuzzy matching se não encontrar exato
+    for nome in possiveis_nomes:
+        correspondencia = difflib.get_close_matches(nome, colunas, n=1, cutoff=0.7)
+        if correspondencia:
+            return correspondencia[0]
+    return None
 
 # Interface
 root = tk.Tk()
@@ -247,23 +299,89 @@ obs_text = (
 obs_label = tk.Label(main_frame, text=obs_text, fg="red", justify="left")
 obs_label.pack(pady=(0, 15), anchor="w")
 
+# Frame para seleção de período
+periodo_frame = tk.Frame(main_frame)
+periodo_frame.pack(pady=(0, 15))
+
 # Label e Combobox para seleção do ano
-ano_label = tk.Label(main_frame, text="Selecione o ano:")
-ano_label.pack(pady=(0, 5))
+ano_label = tk.Label(periodo_frame, text="Ano:")
+ano_label.grid(row=0, column=0, padx=5)
 
 # Criar lista de anos (do ano atual até 5 anos atrás)
 ano_atual = datetime.now().year
 anos = [str(ano) for ano in range(ano_atual - 5, ano_atual + 1)]
 
-ano_combobox = ttk.Combobox(main_frame, values=anos, state="readonly", width=10)
+ano_combobox = ttk.Combobox(periodo_frame, values=anos, state="readonly", width=10)
 ano_combobox.set(str(ano_atual))  # Define o ano atual como padrão
-ano_combobox.pack(pady=(0, 20))
+ano_combobox.grid(row=0, column=1, padx=5)
 
-# Label e botão para seleção do arquivo
-label = tk.Label(main_frame, text="Clique no botão abaixo para selecionar a planilha:")
-label.pack(pady=10)
+# Label e Combobox para seleção do mês inicial
+mes_inicial_label = tk.Label(periodo_frame, text="Mês inicial:")
+mes_inicial_label.grid(row=0, column=2, padx=5)
 
-botao = tk.Button(main_frame, text="Selecionar Planilha", command=selecionar_arquivo)
-botao.pack(pady=20)
+meses = [
+    ("Janeiro", "1"), ("Fevereiro", "2"), ("Março", "3"), ("Abril", "4"),
+    ("Maio", "5"), ("Junho", "6"), ("Julho", "7"), ("Agosto", "8"),
+    ("Setembro", "9"), ("Outubro", "10"), ("Novembro", "11"), ("Dezembro", "12")
+]
+
+mes_inicial_combobox = ttk.Combobox(periodo_frame, values=[m[0] for m in meses], state="readonly", width=15)
+mes_inicial_combobox.set("Janeiro")
+mes_inicial_combobox.grid(row=0, column=3, padx=5)
+
+# Label e Combobox para seleção do mês final
+mes_final_label = tk.Label(periodo_frame, text="Mês final:")
+mes_final_label.grid(row=0, column=4, padx=5)
+
+mes_final_combobox = ttk.Combobox(periodo_frame, values=[m[0] for m in meses], state="readonly", width=15)
+mes_final_combobox.set("Dezembro")
+mes_final_combobox.grid(row=0, column=5, padx=5)
+
+# Frame para botões de seleção
+botoes_frame = tk.Frame(main_frame)
+botoes_frame.pack(pady=15)
+
+# Botão para selecionar arquivo
+botao_arquivo = tk.Button(botoes_frame, text="Selecionar Planilha", command=selecionar_arquivo)
+botao_arquivo.pack(side=tk.LEFT, padx=5)
+
+# Label para mostrar arquivo selecionado
+label_arquivo = tk.Label(botoes_frame, text="Nenhum arquivo selecionado")
+label_arquivo.pack(side=tk.LEFT, padx=5)
+
+# Botão para selecionar pasta
+botao_pasta = tk.Button(botoes_frame, text="Selecionar Pasta de Destino", command=selecionar_pasta)
+botao_pasta.pack(side=tk.LEFT, padx=5)
+
+# Label para mostrar pasta selecionada
+label_pasta = tk.Label(botoes_frame, text="Nenhuma pasta selecionada")
+label_pasta.pack(side=tk.LEFT, padx=5)
+
+# Botão para gerar recibos (inicialmente desabilitado)
+botao_gerar = tk.Button(main_frame, text="Gerar Recibos", command=gerar_recibos, state='disabled')
+botao_gerar.pack(pady=20)
+
+# Função para converter nome do mês para número
+def mes_para_numero(nome_mes):
+    for mes in meses:
+        if mes[0] == nome_mes:
+            return mes[1]
+    return "1"
+
+# Função para atualizar o mês final quando o mês inicial for alterado
+def atualizar_mes_final(event):
+    mes_inicial = mes_inicial_combobox.get()
+    mes_final = mes_final_combobox.get()
+    
+    # Encontrar os índices dos meses selecionados
+    idx_inicial = next(i for i, m in enumerate(meses) if m[0] == mes_inicial)
+    idx_final = next(i for i, m in enumerate(meses) if m[0] == mes_final)
+    
+    # Se o mês inicial for maior que o final, atualizar o final
+    if idx_inicial > idx_final:
+        mes_final_combobox.set(mes_inicial)
+
+# Adicionar evento de mudança ao combobox do mês inicial
+mes_inicial_combobox.bind('<<ComboboxSelected>>', atualizar_mes_final)
 
 root.mainloop()
