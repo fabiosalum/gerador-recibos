@@ -16,7 +16,7 @@
         body {
             font-family: 'Sora', Arial, sans-serif;
             margin: 0 auto;
-            padding: 15mm 12mm;
+            padding: 20mm 30px;
             box-sizing: border-box;
             width: 210mm;
             display: flex;
@@ -106,7 +106,7 @@
     </p>
 
     <p>
-        <span class="bold">Curso:</span> {{ curso }}, {{ periodo }}.
+        <span class="bold">Curso:</span> {{ curso }}, realizado no {{ periodo }}.
         <br>
         <span class="bold">Razão social:</span> ESPERANÇAR INSTITUTO EDUCACIONAL LTDA <br>
         <span class="bold">CNPJ:</span> 32.163.997/0001-97<br>
@@ -133,8 +133,8 @@
     </table>
 
     <p>O valor refere-se à R$ {{ valor_total }} ({{ percentual_pago }}%) de serviço de ensino.</p>
-    <br><br>
-    <p>Por ser verdade, firmamos o presente recibo. </p>
+    <br>
+    <p>Por ser verdade, firmamos o presente recibo. </p><br>
 
     <div class="data-local">Uberaba, {{ data_recibo }}.</div>
 
