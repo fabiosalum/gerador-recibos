@@ -10,6 +10,7 @@ import difflib
 import yagmail
 from email_utils import enviar_emails
 from tkinter.simpledialog import askstring
+import sys
 
 # Variáveis globais para armazenar os caminhos
 arquivo_selecionado = None
@@ -138,7 +139,7 @@ def gerar_recibos():
         print(df_filtrado[mapeamento['data da transação']])
 
         # Carrega o template
-        env = Environment(loader=FileSystemLoader('.'))
+        env = Environment(loader=FileSystemLoader(resource_path('.')))
         template = env.get_template('template_recibo.html')
 
         # Criar pasta de destino, se não existir
@@ -210,7 +211,7 @@ def gerar_recibos():
             percentual_pago_str = f"{percentual_pago:.2f}".replace('.', ',')
 
             def caminho_weasyprint(path):
-                return 'file:///' + os.path.abspath(path).replace('\\', '/')
+                return 'file:///' + resource_path(path).replace('\\', '/')
 
             logo_esperancar_path = caminho_weasyprint("logo-esperancar.jpg")
             print("Logo Esperançar:", logo_esperancar_path)
@@ -432,5 +433,11 @@ def atualizar_mes_final(event):
 
 # Adicionar evento de mudança ao combobox do mês inicial
 mes_inicial_combobox.bind('<<ComboboxSelected>>', atualizar_mes_final)
+
+def resource_path(relative_path):
+    """Obtém o caminho absoluto para o recurso, compatível com PyInstaller."""
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath('.'), relative_path)
 
 root.mainloop()

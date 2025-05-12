@@ -1,9 +1,16 @@
 import yagmail
 import os
 import pandas as pd
+import sys
+
+def resource_path(relative_path):
+    """Obtém o caminho absoluto para o recurso, compatível com PyInstaller."""
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath('.'), relative_path)
 
 def ler_template_email(caminho_template, nome, curso):
-    with open(caminho_template, 'r', encoding='utf-8') as f:
+    with open(resource_path(caminho_template), 'r', encoding='utf-8') as f:
         template = f.read()
     return template.format(nome=nome, curso=curso)
 
